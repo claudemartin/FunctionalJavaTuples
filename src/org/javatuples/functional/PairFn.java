@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -50,6 +53,14 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   /** Converts a BiFunction to a PairFn. */
   static <A, B, R> PairFn<A, B, R> of(final BiFunction<A, B, R> f) {
     return (a, b) -> f.apply(a, b);
+  }
+
+  /** Converts a {@link BiConsumer} to a {@link PairFn}, which returns an empty {@link Optional}. */
+  static <A, B> PairFn<A, B, Optional<Void>> ofBiConsumer(final BiConsumer<A, B> consumer) {
+    return (x, y) -> {
+      consumer.accept(x, y);
+      return Optional.empty();
+    };
   }
 
   /**
