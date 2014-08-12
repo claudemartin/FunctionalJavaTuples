@@ -2,13 +2,16 @@ package org.javatuples.functional;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.javatuples.Unit;
 
 /** @see Unit */
 @FunctionalInterface
-public interface UnitFn<A, R> extends Function<A, R>, Fn<Unit<A>, A, R> {
+public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
   /** Converts an uncurried function to a curried function. */
   static <A, R> Function<A, R> curry(final Function<Unit<A>, R> f) {
     return a -> f.apply(Unit.with(a));
@@ -29,9 +32,31 @@ public interface UnitFn<A, R> extends Function<A, R>, Fn<Unit<A>, A, R> {
     return (a) -> f.apply(a);
   }
 
+  /** Converts a {@link Supplier} to a {@link UnitFn}, which ignores the input. */
+  static <A, R> UnitFn<A, R> ofSupplier(final Supplier<R> supplier) {
+    return x -> supplier.get();
+  }
+
+  /** Converts a {@link Consumer} to a {@link UnitFn}, which returns an empty {@link Optional}. */
+  static <A> UnitFn<A, Optional<Void>> ofConsumer(final Consumer<A> consumer) {
+    return x -> {
+      consumer.accept(x);
+      return Optional.empty();
+    };
+  }
+
+  /**
+   * Applies this function to the given argument.
+   *
+   * @param a
+   *          the function argument
+   * @return the function result
+   */
+  abstract R apply(A a);
+
   @Override
   default Function<A, R> curry() {
-    return this;
+    return this::apply;
   }
 
   @Override
@@ -44,11 +69,14 @@ public interface UnitFn<A, R> extends Function<A, R>, Fn<Unit<A>, A, R> {
     return this.apply(u.getValue0());
   }
 
-  // No actual "partial application", because this only takes one argument.
-  // Passing just one argument is already "complete application".
-
+  /**
+   * Partial application. Returns a result, because this only consumes one argument. This is
+   * equivalent to <code>this.apply(a)</code>. 
+   */
   @Override
   public default R partial(A a) {
+    // No actual "partial application", because this only takes one argument.
+    // Passing just one argument is already "complete application".
     return this.apply(a);
   }
 
@@ -62,5 +90,5 @@ public interface UnitFn<A, R> extends Function<A, R>, Fn<Unit<A>, A, R> {
     requireNonNull(after, "after");
     return (A a) -> after.apply(apply(a));
   }
-  
+
 }

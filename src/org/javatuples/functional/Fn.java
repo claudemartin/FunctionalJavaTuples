@@ -2,13 +2,12 @@ package org.javatuples.functional;
 
 import static java.util.Objects.requireNonNull;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.javatuples.Pair;
 import org.javatuples.Tuple;
+import org.javatuples.valueintf.*;
 
 /**
  * A base type for a function that takes 1, 2, ... or 10 arguments.
@@ -68,6 +67,10 @@ public interface Fn<T extends Tuple, A, R> {
   int arity();
 
   /**
+   * Compose a function that takes a Tuple with this function, which creates the tuple.
+   * 
+   * @see #point(Function)
+   * @see #point(UnitFn)
    * @see Function#andThen(Function)
    * @see BiFunction#andThen(Function)
    */
@@ -93,14 +96,26 @@ public interface Fn<T extends Tuple, A, R> {
    * 
    * @see Function#compose(Function)
    * @see #pipe(UnitFn)
+   * @see #andThen(Function)
    * */
-  default <P> UnitFn<P, R> point(Function<? super P, ? extends T> f) {
+  default <P> UnitFn<P, R> point(UnitFn<? super P, ? extends T> f) {
     requireNonNull(f, "f");
     return x -> this.applyTuple(f.apply(x));
   }
 
   /**
-   * Pipe the output of this to a given, uncurried function.
+   * Compose a function that returns a Tuple with this function, which consumes it.
+   * 
+   * @see #point(UnitFn)
+   * @see #andThen(Function)
+   * */
+  default <P> Function<P, R> point(Function<? super P, ? extends T> f) {
+    requireNonNull(f, "f");
+    return x -> this.applyTuple(f.apply(x));
+  }
+
+  /**
+   * Pipe the output of this to a given, uncurryied function.
    * 
    * @see #andThen(Function)
    * @see #point(UnitFn)
@@ -110,5 +125,101 @@ public interface Fn<T extends Tuple, A, R> {
   default <P> UnitFn<T, P> pipe(Function<? super R, ? extends P> f) {
     requireNonNull(f, "f");
     return x -> f.apply(this.applyTuple(x));
+  }
+
+  // TODO: Would it be better to define an interface for each of these.
+  // Then they would not have to be static. Each Fn could implement those it needs.
+
+  /**
+   * Get the first element of a Tuple.
+   * <p>
+   * Usage:<br>
+   * {@code Function<IValue0<T>, T> fst = Fn::first; }
+   * 
+   * @see IValue0#getValue0()
+   */
+  static <T> T first(IValue0<T> t) {
+    return t.getValue0();
+  }
+
+  /**
+   * Get the second element of a Tuple.
+   * 
+   * @see IValue1#getValue1()
+   */
+  static <T> T second(IValue1<T> t) {
+    return t.getValue1();
+  }
+
+  /**
+   * Get the third element of a Tuple.
+   * 
+   * @see IValue2#getValue2()
+   */
+  static <T> T third(IValue2<T> t) {
+    return t.getValue2();
+  }
+
+  /**
+   * Get the fourth element of a Tuple.
+   * 
+   * @see IValue3#getValue3()
+   */
+  static <T> T fourth(IValue3<T> t) {
+    return t.getValue3();
+  }
+
+  /**
+   * Get the fifth element of a Tuple.
+   * 
+   * @see IValue4#getValue4()
+   */
+  static <T> T fifth(IValue4<T> t) {
+    return t.getValue4();
+  }
+
+  /**
+   * Get the sixth element of a Tuple.
+   * 
+   * @see IValue5#getValue5()
+   */
+  static <T> T sixth(IValue5<T> t) {
+    return t.getValue5();
+  }
+
+  /**
+   * Get the seventh element of a Tuple.
+   * 
+   * @see IValue6#getValue6()
+   */
+  static <T> T seventh(IValue6<T> t) {
+    return t.getValue6();
+  }
+
+  /**
+   * Get the eighth element of a Tuple.
+   * 
+   * @see IValue7#getValue7()
+   */
+  static <T> T eighth(IValue7<T> t) {
+    return t.getValue7();
+  }
+
+  /**
+   * Get the ninth element of a Tuple.
+   * 
+   * @see IValue8#getValue8()
+   */
+  static <T> T ninth(IValue8<T> t) {
+    return t.getValue8();
+  }
+
+  /**
+   * Get the tenth element of a Tuple.
+   * 
+   * @see IValue9#getValue9()
+   */
+  static <T> T tenth(IValue9<T> t) {
+    return t.getValue9();
   }
 }

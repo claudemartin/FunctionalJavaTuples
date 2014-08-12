@@ -1,7 +1,6 @@
 package org.javatuples.functional;
 
 import java.util.Arrays;
-import java.util.function.Function;
 
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
@@ -59,7 +58,7 @@ public class FunctionalDemo {
         for (TripletFn<Integer, Integer, Integer, Integer> f : Arrays.asList(multiply, sum, quadEq)) {
           // A Pair that holds a Triplet and a TripletFn:
           final PairFn<Triplet<Integer, Integer, Integer>, TripletFn<Integer, Integer, Integer, Integer>, Integer> pair;
-          pair = PairFn.of((triplet, fn3) -> fn3.applyTuple(triplet));
+          pair = (triplet, fn3) -> fn3.applyTuple(triplet);
           Integer r1 = pair.apply(t, f);
           Integer r2 = pair.curry().apply(t).apply(f);
           Integer r3 = pair.partial(t).apply(f);
@@ -72,13 +71,13 @@ public class FunctionalDemo {
 
     }
 
-    PairFn<Integer, Integer, Integer> g = PairFn.of(Integer::sum);
-    UnitFn<Integer, Pair<Integer, Integer>> f = UnitFn.ofCurried(x -> Pair.with(x, 42));
+    PairFn<Integer, Integer, Integer> g = Integer::sum;
+    UnitFn<Integer, Pair<Integer, Integer>> f = x -> Pair.with(x, 42);
     {
       check(20, g.apply(7, 13));
       check(Pair.with(5, 42), f.apply(5));
       // g_f = x -> x + 42;
-      Function<Integer, Integer> g_f = g.point(f);
+      UnitFn<Integer, Integer> g_f = g.point(f);
       Integer result = g_f.apply(8);
       check(50, result);
 

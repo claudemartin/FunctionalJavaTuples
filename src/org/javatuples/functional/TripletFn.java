@@ -2,7 +2,12 @@ package org.javatuples.functional;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.javatuples.Triplet;
 
@@ -43,6 +48,59 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   static <A, B, C, R> TripletFn<A, B, C, R> ofCurried(
       final Function<A, Function<B, Function<C, R>>> f) {
     return (a, b, c) -> f.apply(a).apply(b).apply(c);
+  }
+
+  /**
+   * Takes three lists and returns a list of corresponding triplets. If one input list is short,
+   * excess elements of the longer lists are discarded.
+   */
+  static <A, B, C> List<Triplet<A, B, C>> zip(Collection<A> a, Collection<B> b, Collection<C> c) {
+    requireNonNull(a, "a");
+    requireNonNull(b, "b");
+    requireNonNull(c, "c");
+    int size = Math.min(a.size(), Math.min(b.size(), c.size()));
+    return zip(//
+        () -> new ArrayList<>(size), // creates new List
+        (x, y, z) -> Triplet.with(x, y, z), // Creates Triplet of 3 elements
+        a, b, c); // both lists.
+  }
+
+  /**
+   * Generalises {@link #zip(List, List, List) zip}.
+   */
+  static <A, B, C> List<Triplet<A, B, C>> zip(Supplier<List<Triplet<A, B, C>>> supplier,
+      TripletFn<A, B, C, Triplet<A, B, C>> zipper, Iterable<A> a, Iterable<B> b, Iterable<C> c) {
+    requireNonNull(supplier, "supplier");
+    requireNonNull(zipper, "zipper");
+    requireNonNull(a, "a");
+    requireNonNull(b, "b");
+    requireNonNull(c, "c");
+    Iterator<A> itrA = a.iterator();
+    Iterator<B> itrB = b.iterator();
+    Iterator<C> itrC = c.iterator();
+    List<Triplet<A, B, C>> result = supplier.get();
+    while (itrA.hasNext() && itrB.hasNext() && itrC.hasNext())
+      result.add(zipper.apply(itrA.next(), itrB.next(), itrC.next()));
+    return result;
+  }
+
+  /**
+   * Transforms a list of triplets into 3 lists.
+   */
+  static <A, B, C> Triplet<List<A>, List<B>, List<C>> unzip(List<Triplet<A, B, C>> triplets) {
+    requireNonNull(triplets, "triplets");
+    int size = triplets.size();
+    ArrayList<A> a = new ArrayList<>(size);
+    ArrayList<B> b = new ArrayList<>(size);
+    ArrayList<C> c = new ArrayList<>(size);
+    Triplet<List<A>, List<B>, List<C>> result = Triplet.with(a, b, c);
+
+    triplets.forEach(p -> {
+      a.add(p.getValue0());
+      b.add(p.getValue1());
+      c.add(p.getValue2());
+    });
+    return result;
   }
 
   @Override
