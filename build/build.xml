@@ -1,0 +1,28 @@
+<project default="build" name="FunctionalJavaTuples" basedir="..">
+  
+  <target name="build" depends="compile" description="generate the distribution">
+    <copy file="./lib/javatuples-1.2/dist/javatuples-1.2.jar" tofile="./build/javatupes.jar"/>
+     <tstamp>
+       <format property="TIME" pattern="yyyy-MM-dd-HH-mm-ss" locale="en,GB"/>
+    </tstamp>
+    <jar jarfile="build/functional.jar" basedir="bin">
+      <exclude name="**Test.class" />
+      <manifest>
+        <attribute name="Manifest-Version" value="1.0" />
+        <attribute name="Built-By" value="Claude Martin" />
+        <attribute name="Sealed" value="true" />
+        <attribute name="Implementation-Time" value="${TIME}" />
+        <attribute name="Implementation-Title" value="${ant.project.name}" />
+        <attribute name="Implementation-Vendor" value="Claude Martin" />
+        <attribute name="Implementation-Vendor-URL" value="http://claude-martin.ch/" />
+        <attribute name="Class-Path" value="javatupes.jar" />
+        <attribute name="Main-Class" value="org.javatuples.functional.FunctionalDemo" />
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="compile" description="compile the source code">
+    <javac srcdir="src" destdir="bin" debug="off" />
+  </target>
+
+</project>
