@@ -10,7 +10,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.javatuples.Triplet;
-import org.javatuples.Unit;
 
 /** @see Triplet */
 @FunctionalInterface
@@ -26,7 +25,7 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
    *          the third function argument
    * @return the function result
    */
-  R apply(A a, B b, C c);
+  R apply(final A a, final B b, final C c);
 
   /** Converts an uncurried function to a curried function. */
   static <A, B, C, R> Function<A, Function<B, Function<C, R>>> curry(
@@ -60,11 +59,12 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
    * Takes three lists and returns a list of corresponding triplets. If one input list is short,
    * excess elements of the longer lists are discarded.
    */
-  static <A, B, C> List<Triplet<A, B, C>> zip(Collection<A> a, Collection<B> b, Collection<C> c) {
+  static <A, B, C> List<Triplet<A, B, C>> zip(final Collection<A> a, final Collection<B> b,
+      final Collection<C> c) {
     requireNonNull(a, "a");
     requireNonNull(b, "b");
     requireNonNull(c, "c");
-    int size = Math.min(a.size(), Math.min(b.size(), c.size()));
+    final int size = Math.min(a.size(), Math.min(b.size(), c.size()));
     return zip(//
         () -> new ArrayList<>(size), // creates new List
         (x, y, z) -> Triplet.with(x, y, z), // Creates Triplet of 3 elements
@@ -74,17 +74,18 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   /**
    * Generalizes {@link #zip(List, List, List) zip}.
    */
-  static <A, B, C> List<Triplet<A, B, C>> zip(Supplier<List<Triplet<A, B, C>>> supplier,
-      TripletFn<A, B, C, Triplet<A, B, C>> zipper, Iterable<A> a, Iterable<B> b, Iterable<C> c) {
+  static <A, B, C> List<Triplet<A, B, C>> zip(final Supplier<List<Triplet<A, B, C>>> supplier,
+      final TripletFn<A, B, C, Triplet<A, B, C>> zipper, final Iterable<A> a, final Iterable<B> b,
+      final Iterable<C> c) {
     requireNonNull(supplier, "supplier");
     requireNonNull(zipper, "zipper");
     requireNonNull(a, "a");
     requireNonNull(b, "b");
     requireNonNull(c, "c");
-    Iterator<A> itrA = a.iterator();
-    Iterator<B> itrB = b.iterator();
-    Iterator<C> itrC = c.iterator();
-    List<Triplet<A, B, C>> result = supplier.get();
+    final Iterator<A> itrA = a.iterator();
+    final Iterator<B> itrB = b.iterator();
+    final Iterator<C> itrC = c.iterator();
+    final List<Triplet<A, B, C>> result = supplier.get();
     while (itrA.hasNext() && itrB.hasNext() && itrC.hasNext())
       result.add(zipper.apply(itrA.next(), itrB.next(), itrC.next()));
     return result;
@@ -93,13 +94,13 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   /**
    * Transforms a list of triplets into 3 lists.
    */
-  static <A, B, C> Triplet<List<A>, List<B>, List<C>> unzip(List<Triplet<A, B, C>> triplets) {
+  static <A, B, C> Triplet<List<A>, List<B>, List<C>> unzip(final List<Triplet<A, B, C>> triplets) {
     requireNonNull(triplets, "triplets");
-    int size = triplets.size();
-    ArrayList<A> a = new ArrayList<>(size);
-    ArrayList<B> b = new ArrayList<>(size);
-    ArrayList<C> c = new ArrayList<>(size);
-    Triplet<List<A>, List<B>, List<C>> result = Triplet.with(a, b, c);
+    final int size = triplets.size();
+    final ArrayList<A> a = new ArrayList<>(size);
+    final ArrayList<B> b = new ArrayList<>(size);
+    final ArrayList<C> c = new ArrayList<>(size);
+    final Triplet<List<A>, List<B>, List<C>> result = Triplet.with(a, b, c);
 
     triplets.forEach(p -> {
       a.add(p.getValue0());
@@ -116,16 +117,16 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
 
   @Override
   default Function<Triplet<A, B, C>, R> uncurry() {
-    return (Triplet<A, B, C> t) -> this.apply(t.getValue0(), t.getValue1(), t.getValue2());
+    return (final Triplet<A, B, C> t) -> this.apply(t.getValue0(), t.getValue1(), t.getValue2());
   }
 
   @Override
-  public default R applyTuple(Triplet<A, B, C> t) {
+  public default R applyTuple(final Triplet<A, B, C> t) {
     return this.apply(t.getValue0(), t.getValue1(), t.getValue2());
   }
 
   @Override
-  default Function<B, Function<C, R>> partial(A a) {
+  default Function<B, Function<C, R>> partial(final A a) {
     return b -> c -> this.apply(a, b, c);
   }
 
@@ -135,8 +136,8 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   }
 
   @Override
-  public default <R2> TripletFn<A, B, C, R2> andThen(Function<? super R, ? extends R2> after) {
+  public default <R2> TripletFn<A, B, C, R2> andThen(final Function<? super R, ? extends R2> after) {
     requireNonNull(after, "after");
-    return (A a, B b, C c) -> after.apply(apply(a, b, c));
+    return (final A a, final B b, final C c) -> after.apply(apply(a, b, c));
   }
 }

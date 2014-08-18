@@ -3,18 +3,13 @@ package org.javatuples.functional;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.javatuples.Pair;
 import org.javatuples.Unit;
-import org.javatuples.valueintf.IValue0;
 
 /** @see Unit */
 @FunctionalInterface
@@ -26,15 +21,15 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
 
   /** Converts a curried function to a function on units. */
   static <A, R> Function<Unit<A>, R> uncurry(final Function<A, R> f) {
-    return (Unit<A> p) -> f.apply(p.getValue0());
+    return (final Unit<A> p) -> f.apply(p.getValue0());
   }
 
-  /** Converts an uncurried function to a Function. */
+  /** Converts an uncurried function to a UnitFn. */
   static <A, R> UnitFn<A, R> ofUncurried(final Function<Unit<A>, R> f) {
     return (a) -> f.apply(Unit.with(a));
   }
 
-  /** Converts an curried function to a Function. */
+  /** Converts an curried function to a UnitFn. */
   static <A, R> UnitFn<A, R> ofCurried(final Function<A, R> f) {
     return (a) -> f.apply(a);
   }
@@ -57,7 +52,6 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
     return Unit::with;
   }
 
-  
   /**
    * Applies this function to the given argument.
    *
@@ -65,7 +59,7 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
    *          the function argument
    * @return the function result
    */
-  abstract R apply(A a);
+  abstract R apply(final A a);
 
   @Override
   default Function<A, R> curry() {
@@ -74,51 +68,53 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
 
   @Override
   default Function<Unit<A>, R> uncurry() {
-    return (Unit<A> p) -> this.apply(p.getValue0());
+    return (final Unit<A> p) -> this.apply(p.getValue0());
   }
 
   @Override
-  public default R applyTuple(Unit<A> u) {
+  public default R applyTuple(final Unit<A> u) {
     return this.apply(u.getValue0());
   }
-  
+
   @SuppressWarnings("unchecked")
   @Override
-  public default R applyArray(Object[] array) {
+  public default R applyArray(final Object[] array) {
     requireNonNull(array, "array");
     if (array.length != 1)
       throw new IllegalArgumentException("Length of array must be 1");
-    return this.apply((A)array[0]);
+    return this.apply((A) array[0]);
   }
 
   /**
    * Applies this function to all elements of a collection in parallel.
    * 
-   * @param collection A collection.
+   * @param collection
+   *          A collection.
    * @return A possibly parallel stream of mapped values.
    * @see #seq(Collection)
    */
-  default <A2 extends A> Stream<R> par(Collection<A2> collection) {
+  default <A2 extends A> Stream<R> par(final Collection<A2> collection) {
     return collection.parallelStream().map(this::apply);
   }
-  
+
   /**
    * Applies this function to all elements of a collection sequentially.
    * 
-   * @param collection A collection.
+   * @param collection
+   *          A collection.
    * @return A sequential stream of mapped values.
    * @see #par(Collection)
    */
-  default <A2 extends A> Stream<R> seq(Collection<A2> collection) {
+  default <A2 extends A> Stream<R> seq(final Collection<A2> collection) {
     return collection.stream().map(this::apply);
   }
-  
+
   /**
    * Partial application. Returns a result, because this only consumes one argument. This is
-   * equivalent to <code>this.apply(a)</code>. 
+   * equivalent to <code>this.apply(a)</code>.
    */
   @Override
-  public default R partial(A a) {
+  public default R partial(final A a) {
     // No actual "partial application", because this only takes one argument.
     // Passing just one argument is already "complete application".
     return this.apply(a);
@@ -130,9 +126,9 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
   }
 
   @Override
-  public default <R2> UnitFn<A, R2> andThen(Function<? super R, ? extends R2> after) {
+  public default <R2> UnitFn<A, R2> andThen(final Function<? super R, ? extends R2> after) {
     requireNonNull(after, "after");
-    return (A a) -> after.apply(apply(a));
+    return (final A a) -> after.apply(apply(a));
   }
 
 }

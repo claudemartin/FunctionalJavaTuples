@@ -7,12 +7,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -32,7 +29,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
    *          the second function argument
    * @return the function result
    */
-  abstract R apply(A a, B b);
+  abstract R apply(final A a, final B b);
 
   /** Converts an uncurried function to a curried function. */
   static <A, B, R> Function<A, Function<B, R>> curry(final Function<Pair<A, B>, R> f) {
@@ -41,7 +38,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
 
   /** Converts a curried function to a function on pairs. */
   static <A, B, R> Function<Pair<A, B>, R> uncurry(final Function<A, Function<B, R>> f) {
-    return (Pair<A, B> p) -> f.apply(p.getValue0()).apply(p.getValue1());
+    return (final Pair<A, B> p) -> f.apply(p.getValue0()).apply(p.getValue1());
   }
 
   /** Converts an uncurried function to a PairFn. */
@@ -76,7 +73,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
    * Takes two lists and returns a list of corresponding pairs. If one input list is short, excess
    * elements of the longer list are discarded.
    */
-  static <A, B> List<Pair<A, B>> zip(Collection<A> a, Collection<B> b) {
+  static <A, B> List<Pair<A, B>> zip(final Collection<A> a, final Collection<B> b) {
     requireNonNull(a, "a");
     requireNonNull(b, "b");
     return zip(//
@@ -88,15 +85,15 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   /**
    * Generalizes {@link #zip(List, List) zip}.
    */
-  static <A, B> List<Pair<A, B>> zip(Supplier<List<Pair<A, B>>> supplier,
-      PairFn<A, B, Pair<A, B>> zipper, Iterable<A> a, Iterable<B> b) {
+  static <A, B> List<Pair<A, B>> zip(final Supplier<List<Pair<A, B>>> supplier,
+      final PairFn<A, B, Pair<A, B>> zipper, final Iterable<A> a, final Iterable<B> b) {
     requireNonNull(supplier, "supplier");
     requireNonNull(zipper, "zipper");
     requireNonNull(a, "a");
     requireNonNull(b, "b");
-    Iterator<A> itrA = a.iterator();
-    Iterator<B> itrB = b.iterator();
-    List<Pair<A, B>> result = supplier.get();
+    final Iterator<A> itrA = a.iterator();
+    final Iterator<B> itrB = b.iterator();
+    final List<Pair<A, B>> result = supplier.get();
     while (itrA.hasNext() && itrB.hasNext())
       result.add(zipper.apply(itrA.next(), itrB.next()));
     return result;
@@ -105,12 +102,12 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   /**
    * Transforms a list of pairs into a list of first components and a list of second components.
    */
-  static <A, B> Pair<List<A>, List<B>> unzip(List<Pair<A, B>> pairs) {
+  static <A, B> Pair<List<A>, List<B>> unzip(final List<Pair<A, B>> pairs) {
     requireNonNull(pairs, "pairs");
-    int size = pairs.size();
-    ArrayList<A> a = new ArrayList<>(size);
-    ArrayList<B> b = new ArrayList<>(size);
-    Pair<List<A>, List<B>> result = Pair.with(a, b);
+    final int size = pairs.size();
+    final ArrayList<A> a = new ArrayList<>(size);
+    final ArrayList<B> b = new ArrayList<>(size);
+    final Pair<List<A>, List<B>> result = Pair.with(a, b);
 
     pairs.forEach(p -> {
       a.add(p.getValue0());
@@ -126,11 +123,11 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
 
   @Override
   default Function<Pair<A, B>, R> uncurry() {
-    return (Pair<A, B> p) -> this.apply(p.getValue0(), p.getValue1());
+    return (final Pair<A, B> p) -> this.apply(p.getValue0(), p.getValue1());
   }
 
   @Override
-  public default R applyTuple(Pair<A, B> p) {
+  public default R applyTuple(final Pair<A, B> p) {
     return this.apply(p.getValue0(), p.getValue1());
   }
 
@@ -142,7 +139,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
    * @return A possibly parallel stream of mapped values.
    * @see PairFn#seq(Map)
    */
-  default <A2 extends A, B2 extends B> Stream<R> par(Map<A2, B2> map) {
+  default <A2 extends A, B2 extends B> Stream<R> par(final Map<A2, B2> map) {
     return map.entrySet().parallelStream().map(e -> this.apply(e.getKey(), e.getValue()));
   }
 
@@ -154,12 +151,12 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
    * @return A sequential stream of mapped values.
    * @see PairFn#par(Map)
    */
-  default <A2 extends A, B2 extends B> Stream<R> seq(Map<A2, B2> map) {
+  default <A2 extends A, B2 extends B> Stream<R> seq(final Map<A2, B2> map) {
     return map.entrySet().stream().map(e -> this.apply(e.getKey(), e.getValue()));
   }
 
   @Override
-  default Function<B, R> partial(A a) {
+  default Function<B, R> partial(final A a) {
     return b -> this.apply(a, b);
   }
 
@@ -169,8 +166,8 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   }
 
   @Override
-  public default <R2> PairFn<A, B, R2> andThen(Function<? super R, ? extends R2> after) {
+  public default <R2> PairFn<A, B, R2> andThen(final Function<? super R, ? extends R2> after) {
     requireNonNull(after, "after");
-    return (A a, B b) -> after.apply(apply(a, b));
+    return (final A a, final B b) -> after.apply(apply(a, b));
   }
 }

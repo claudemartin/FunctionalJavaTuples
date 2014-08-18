@@ -4,12 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.javatuples.Tuple;
-import org.javatuples.valueintf.*;
+import org.javatuples.valueintf.IValue0;
+import org.javatuples.valueintf.IValue1;
+import org.javatuples.valueintf.IValue2;
+import org.javatuples.valueintf.IValue3;
 
 /**
  * A base type for a function that takes 1, 2, ... or 10 arguments.
@@ -41,16 +43,16 @@ public interface Fn<T extends Tuple, A, R> {
    *           fails.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  default R applyTuple(T t) {
+  default R applyTuple(final T t) {
     try {
       if (this.arity() != t.getSize())
         throw new IllegalArgumentException(
             "Arity of this function does not match the size of the given tuple.");
       Object curry = this.curry();
-      for (Object o : t.toList())
+      for (final Object o : t.toList())
         curry = ((Function) curry).apply(o);
       return (R) curry;
-    } catch (ClassCastException e) {
+    } catch (final ClassCastException e) {
       throw new IllegalArgumentException("Tuple not applicable to this function.", e);
     }
   }
@@ -62,15 +64,15 @@ public interface Fn<T extends Tuple, A, R> {
    *          array containing all arguments
    */
   @SuppressWarnings("unchecked")
-  default R applyArray(Object[] array) {
+  default R applyArray(final Object[] array) {
     requireNonNull(array, "array");
     if (array.length != this.arity())
       throw new IllegalArgumentException("Length of array must be " + this.arity());
 
     Function<Object, ?> f = (Function<Object, ?>) this.curry();
     for (int i = 0; i < array.length - 1; i++) {
-      Object arg = array[i];
-      Object next = f.apply(arg);
+      final Object arg = array[i];
+      final Object next = f.apply(arg);
       if (!(next instanceof Function))
         throw new IllegalArgumentException("Result was not a function, but more arguments remain.");
       f = (Function<Object, ?>) next;
@@ -85,7 +87,7 @@ public interface Fn<T extends Tuple, A, R> {
    *          list containing all arguments
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  default R applyList(List list) {
+  default R applyList(final List list) {
     requireNonNull(list, "list");
     if (list.size() != this.arity())
       throw new IllegalArgumentException("Length of list must be " + this.arity());
@@ -93,8 +95,8 @@ public interface Fn<T extends Tuple, A, R> {
     Function<Object, ?> f = (Function<Object, ?>) this.curry();
     final Iterator itr = list.iterator();
     while (true) {
-      Object arg = itr.next();
-      Object next = f.apply(arg);
+      final Object arg = itr.next();
+      final Object next = f.apply(arg);
       if (!itr.hasNext())
         return (R) next;
       if (!(next instanceof Function))
@@ -111,7 +113,7 @@ public interface Fn<T extends Tuple, A, R> {
    * 
    * @return A {@link Function} or a result of type R.
    */
-  Object partial(A a);
+  Object partial(final A a);
 
   /**
    * The <i>arity</i> is the number of arguments of this function.
@@ -129,7 +131,7 @@ public interface Fn<T extends Tuple, A, R> {
    * @see Function#andThen(Function)
    * @see BiFunction#andThen(Function)
    */
-  <R2> Fn<?, ?, ? extends R2> andThen(Function<? super R, ? extends R2> after);
+  <R2> Fn<?, ?, ? extends R2> andThen(final Function<? super R, ? extends R2> after);
 
   /**
    * Compose a function that returns a Tuple with this function, which consumes it. The name "point"
@@ -153,7 +155,7 @@ public interface Fn<T extends Tuple, A, R> {
    * @see #pipe(UnitFn)
    * @see #andThen(Function)
    * */
-  default <P> UnitFn<P, R> point(UnitFn<? super P, ? extends T> f) {
+  default <P> UnitFn<P, R> point(final UnitFn<? super P, ? extends T> f) {
     requireNonNull(f, "f");
     return x -> this.applyTuple(f.apply(x));
   }
@@ -164,7 +166,7 @@ public interface Fn<T extends Tuple, A, R> {
    * @see #point(UnitFn)
    * @see #andThen(Function)
    * */
-  default <P> Function<P, R> point(Function<? super P, ? extends T> f) {
+  default <P> Function<P, R> point(final Function<? super P, ? extends T> f) {
     requireNonNull(f, "f");
     return x -> this.applyTuple(f.apply(x));
   }
@@ -178,11 +180,11 @@ public interface Fn<T extends Tuple, A, R> {
    * @see Function#andThen(Function)
    * @see BiFunction#andThen(Function)
    * */
-  default <P> UnitFn<T, P> pipe(Function<? super R, ? extends P> f) {
+  default <P> UnitFn<T, P> pipe(final Function<? super R, ? extends P> f) {
     requireNonNull(f, "f");
     return x -> f.apply(this.applyTuple(x));
   }
-  
+
   /**
    * Pipe the output of this to a given, uncurried function.
    * 
@@ -192,7 +194,7 @@ public interface Fn<T extends Tuple, A, R> {
    * @see Function#andThen(Function)
    * @see BiFunction#andThen(Function)
    * */
-  default <P> UnitFn<T, P> pipe(UnitFn<? super R, ? extends P> f) {
+  default <P> UnitFn<T, P> pipe(final UnitFn<? super R, ? extends P> f) {
     requireNonNull(f, "f");
     return x -> f.apply(this.applyTuple(x));
   }
