@@ -2,6 +2,8 @@ package org.javatuples.functional;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -11,15 +13,20 @@ import org.javatuples.valueintf.*;
 
 /**
  * A base type for a function that takes 1, 2, ... or 10 arguments.
- * 
+ * <p>
  * Every extending interface is a {@link FunctionalInterface functional interface}.
+ * <p>
+ * This represents a regular Java Lambda, not a {@link Function}. The curried form is a Function and
+ * allows partial application. The uncurried form is also a Function, but takes a {@link Tuple}.
+ * There are static constructor methods starting with "of" in all extending interfaces to create Fn
+ * instances from (un)curried Functions.
  * 
  * @see Function
  * @see BiFunction
  */
 public interface Fn<T extends Tuple, A, R> {
   /** Converts this to a curried function. */
-  Function<?, ?> curry();
+  Function<A, ?> curry();
 
   /** Converts this to a function on tuples. */
   Function<T, R> uncurry();
@@ -49,7 +56,55 @@ public interface Fn<T extends Tuple, A, R> {
   }
 
   /**
-   * Partial application. Returns a result or a curried function.<br>
+   * Applies all values of a given array to this function.
+   * 
+   * @param a
+   *          array containing all arguments
+   */
+  @SuppressWarnings("unchecked")
+  default R applyArray(Object[] array) {
+    requireNonNull(array, "array");
+    if (array.length != this.arity())
+      throw new IllegalArgumentException("Length of array must be " + this.arity());
+
+    Function<Object, ?> f = (Function<Object, ?>) this.curry();
+    for (int i = 0; i < array.length - 1; i++) {
+      Object arg = array[i];
+      Object next = f.apply(arg);
+      if (!(next instanceof Function))
+        throw new IllegalArgumentException("Result was not a function, but more arguments remain.");
+      f = (Function<Object, ?>) next;
+    }
+    return (R) f.apply(array[array.length - 1]);
+  }
+
+  /**
+   * Applies all values of a given {@link List} to this function.
+   * 
+   * @param a
+   *          list containing all arguments
+   */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  default R applyList(List list) {
+    requireNonNull(list, "list");
+    if (list.size() != this.arity())
+      throw new IllegalArgumentException("Length of list must be " + this.arity());
+
+    Function<Object, ?> f = (Function<Object, ?>) this.curry();
+    final Iterator itr = list.iterator();
+    while (true) {
+      Object arg = itr.next();
+      Object next = f.apply(arg);
+      if (!itr.hasNext())
+        return (R) next;
+      if (!(next instanceof Function))
+        throw new IllegalArgumentException("Result was not a function, but more arguments remain.");
+      f = (Function<Object, ?>) next;
+    }
+  }
+
+  /**
+   * Partial application. Returns curried function.<br>
    * If this is a {@link UnitFn} then a result of type R is returned. In any other case this is
    * equivalent to:<br>
    * <code>fn.curry().apply(a);</code>
@@ -115,8 +170,9 @@ public interface Fn<T extends Tuple, A, R> {
   }
 
   /**
-   * Pipe the output of this to a given, uncurryied function.
+   * Pipe the output of this to a given, uncurried function.
    * 
+   * @see #pipe(UnitFn)
    * @see #andThen(Function)
    * @see #point(UnitFn)
    * @see Function#andThen(Function)
@@ -126,100 +182,39 @@ public interface Fn<T extends Tuple, A, R> {
     requireNonNull(f, "f");
     return x -> f.apply(this.applyTuple(x));
   }
-
-  // TODO: Would it be better to define an interface for each of these.
-  // Then they would not have to be static. Each Fn could implement those it needs.
-
+  
   /**
-   * Get the first element of a Tuple.
-   * <p>
-   * Usage:<br>
-   * {@code Function<IValue0<T>, T> fst = Fn::first; }
+   * Pipe the output of this to a given, uncurried function.
    * 
-   * @see IValue0#getValue0()
-   */
-  static <T> T first(IValue0<T> t) {
-    return t.getValue0();
+   * @see #pipe(Function)
+   * @see #andThen(Function)
+   * @see #point(UnitFn)
+   * @see Function#andThen(Function)
+   * @see BiFunction#andThen(Function)
+   * */
+  default <P> UnitFn<T, P> pipe(UnitFn<? super R, ? extends P> f) {
+    requireNonNull(f, "f");
+    return x -> f.apply(this.applyTuple(x));
   }
 
-  /**
-   * Get the second element of a Tuple.
-   * 
-   * @see IValue1#getValue1()
-   */
-  static <T> T second(IValue1<T> t) {
-    return t.getValue1();
+  /** Function to get the first element of a Tuple. @see IValue0#getValue0() */
+  static <T> UnitFn<IValue0<T>, T> first() {
+    return IValue0::getValue0;
   }
 
-  /**
-   * Get the third element of a Tuple.
-   * 
-   * @see IValue2#getValue2()
-   */
-  static <T> T third(IValue2<T> t) {
-    return t.getValue2();
+  /** Function to get the second element of a Tuple. @see IValue1#getValue1() */
+  static <T> UnitFn<IValue1<T>, T> second() {
+    return IValue1::getValue1;
   }
 
-  /**
-   * Get the fourth element of a Tuple.
-   * 
-   * @see IValue3#getValue3()
-   */
-  static <T> T fourth(IValue3<T> t) {
-    return t.getValue3();
+  /** Function to get the third element of a Tuple. @see IValue2#getValue2() */
+  static <T> UnitFn<IValue2<T>, T> third() {
+    return IValue2::getValue2;
   }
 
-  /**
-   * Get the fifth element of a Tuple.
-   * 
-   * @see IValue4#getValue4()
-   */
-  static <T> T fifth(IValue4<T> t) {
-    return t.getValue4();
+  /** Function to get the fourth element of a Tuple. @see IValue3#getValue3() */
+  static <T> UnitFn<IValue3<T>, T> fourth() {
+    return IValue3::getValue3;
   }
-
-  /**
-   * Get the sixth element of a Tuple.
-   * 
-   * @see IValue5#getValue5()
-   */
-  static <T> T sixth(IValue5<T> t) {
-    return t.getValue5();
-  }
-
-  /**
-   * Get the seventh element of a Tuple.
-   * 
-   * @see IValue6#getValue6()
-   */
-  static <T> T seventh(IValue6<T> t) {
-    return t.getValue6();
-  }
-
-  /**
-   * Get the eighth element of a Tuple.
-   * 
-   * @see IValue7#getValue7()
-   */
-  static <T> T eighth(IValue7<T> t) {
-    return t.getValue7();
-  }
-
-  /**
-   * Get the ninth element of a Tuple.
-   * 
-   * @see IValue8#getValue8()
-   */
-  static <T> T ninth(IValue8<T> t) {
-    return t.getValue8();
-  }
-
-  /**
-   * Get the tenth element of a Tuple.
-   * 
-   * @see IValue9#getValue9()
-   */
-  static <T> T tenth(IValue9<T> t) {
-    return t.getValue9();
-  }
+  // TODO: fifth, sixth, seventh, eighth, ninth, tenth
 }

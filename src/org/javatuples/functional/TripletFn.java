@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.javatuples.Triplet;
+import org.javatuples.Unit;
 
 /** @see Triplet */
 @FunctionalInterface
@@ -50,6 +51,11 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
     return (a, b, c) -> f.apply(a).apply(b).apply(c);
   }
 
+  /** <code>Triplet::with</code> */
+  static <A, B, C> TripletFn<A, B, C, Triplet<A, B, C>> with() {
+    return Triplet::with;
+  }
+
   /**
    * Takes three lists and returns a list of corresponding triplets. If one input list is short,
    * excess elements of the longer lists are discarded.
@@ -66,7 +72,7 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   }
 
   /**
-   * Generalises {@link #zip(List, List, List) zip}.
+   * Generalizes {@link #zip(List, List, List) zip}.
    */
   static <A, B, C> List<Triplet<A, B, C>> zip(Supplier<List<Triplet<A, B, C>>> supplier,
       TripletFn<A, B, C, Triplet<A, B, C>> zipper, Iterable<A> a, Iterable<B> b, Iterable<C> c) {

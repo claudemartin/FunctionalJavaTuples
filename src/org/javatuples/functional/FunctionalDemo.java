@@ -1,20 +1,29 @@
 package org.javatuples.functional;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toSet;
+
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.javatuples.Unit;
 
 /**
- * Utility class for functional programming with java tuples.
+ * Demonstration of functional programming with java tuples.
  * 
- * THIS IS JUST A PROTOTYPE.
+ * THIS IS JUST A PROTOTYPE. It can be transformed to proper JUnit tests.
  * 
  * @author Claude Martin
  *
  */
 public class FunctionalDemo {
+  /** Assert that all are equal. */
   @SafeVarargs
   static <T> void check(T expected, T... actual) {
     for (T a : actual) {
@@ -88,10 +97,48 @@ public class FunctionalDemo {
       result = g_f.apply(8);
       check(8, result);
     }
-    
+
     {
-      Integer result =  f.pipe(g.uncurry()).apply(Unit.with(8));
+      check(20, g.applyArray(new Integer[] { 7, 13 }));
+      check(20, g.applyList(asList(7, 13)));
+
+      try {
+        g.applyArray(new Object[] { "7", 123 });
+        throw new RuntimeException("applyArray consumed wrong type!");
+      } catch (ClassCastException e) {
+        // expected!
+      }
+
+      try {
+        g.applyArray(new Object[] { 123, 123, 123 });
+        throw new RuntimeException("applyArray consumed too many arguments!");
+      } catch (IllegalArgumentException e) {
+        // expected!
+      }
+    }
+
+    {
+      Integer result = f.pipe(g.uncurry()).apply(Unit.with(8));
       check(50, result);
+    }
+
+    {
+      Map<Integer, String> map = new HashMap<>();
+      map.put(1, "Number One!");
+      map.put(42, "The Answer");
+      map.put(666, "Number of the Beast");
+      map.put(-1, "Negative");
+      map.put(Integer.MAX_VALUE, "Maximum");
+
+      map.entrySet().stream().map(e -> Pair.with(e.getKey(), e.getValue()));
+      Set<Pair<Integer, String>> set1 = PairFn.<Integer, String> with().par(map).collect(toSet());
+      Set<Pair<Integer, String>> set2 = map.entrySet().stream()
+          .map(e -> Pair.with(e.getKey(), e.getValue())).collect(toSet());
+      check(set2, set1);
+
+      Set<Integer> set3 = Fn.<Integer> first().par(set1).collect(toSet());
+      Set<Integer> set4 = set1.parallelStream().map(Pair::getValue0).collect(toSet());
+      check(set3, set4);
     }
 
     System.out.println("All tests passed successfully!");

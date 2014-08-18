@@ -6,12 +6,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.javatuples.Pair;
 
@@ -63,6 +67,11 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
     };
   }
 
+  /** <code>Pair::with</code> */
+  static <A, B> PairFn<A, B, Pair<A, B>> with() {
+    return Pair::with;
+  }
+
   /**
    * Takes two lists and returns a list of corresponding pairs. If one input list is short, excess
    * elements of the longer list are discarded.
@@ -77,7 +86,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   }
 
   /**
-   * Generalises {@link #zip(List, List) zip}.
+   * Generalizes {@link #zip(List, List) zip}.
    */
   static <A, B> List<Pair<A, B>> zip(Supplier<List<Pair<A, B>>> supplier,
       PairFn<A, B, Pair<A, B>> zipper, Iterable<A> a, Iterable<B> b) {
@@ -123,6 +132,30 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   @Override
   public default R applyTuple(Pair<A, B> p) {
     return this.apply(p.getValue0(), p.getValue1());
+  }
+
+  /**
+   * Applies this function to all entries of a map in parallel.
+   * 
+   * @param map
+   *          A map.
+   * @return A possibly parallel stream of mapped values.
+   * @see PairFn#seq(Map)
+   */
+  default <A2 extends A, B2 extends B> Stream<R> par(Map<A2, B2> map) {
+    return map.entrySet().parallelStream().map(e -> this.apply(e.getKey(), e.getValue()));
+  }
+
+  /**
+   * Applies this function to all entries of a map sequentially.
+   * 
+   * @param map
+   *          A map.
+   * @return A sequential stream of mapped values.
+   * @see PairFn#par(Map)
+   */
+  default <A2 extends A, B2 extends B> Stream<R> seq(Map<A2, B2> map) {
+    return map.entrySet().stream().map(e -> this.apply(e.getKey(), e.getValue()));
   }
 
   @Override
