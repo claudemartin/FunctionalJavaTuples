@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.Set;
 
 import org.javatuples.Pair;
@@ -47,6 +49,72 @@ public class FunctionalDemo {
       check(expected, concat3.partial(a).apply(b).apply(c));
       check(expected, concat3.applyTuple(Triplet.with(a, b, c)));
       check(expected, concat3.uncurry().apply(Triplet.with(a, b, c)));
+    }
+
+    {
+
+      TripletFn<BiFunction<Integer, Integer, Integer>, UnitFn<Integer, UnitFn<Integer, Integer>>, UnitFn<Pair<Integer, Integer>, Integer>, Boolean> test;
+      test = (bi, cur, unc) -> {
+        Integer i1 = bi.apply(3, 7);
+        Integer i2 = cur.apply(3).apply(7);
+        Integer i3 = unc.apply(Pair.with(3, 7));
+        Integer expected = 3 + 7;
+
+        for (Integer i : asList(i1, i2, i3)) {
+          if (!expected.equals(i))
+            throw new RuntimeException(i + " != " + expected);
+        }
+        return true;
+      };
+      // Regular Java Lambda:
+      BiFunction<Integer, Integer, Integer> biFn;
+      // PairFn:
+      PairFn<Integer, Integer, Integer> pairFn;
+      // Curried Form:
+      UnitFn<Integer, UnitFn<Integer, Integer>> curried;
+      // Uncurrdied Form:
+      UnitFn<Pair<Integer, Integer>, Integer> uncurried;
+
+      // Lambda declarations:
+      biFn = (a, b) -> a + b;
+      pairFn = (a, b) -> a + b;
+      curried = a -> b -> a + b;
+      uncurried = x -> x.getValue0() + x.getValue1();
+
+      test.apply(biFn, curried, uncurried);
+
+      // PairFn to BiFunction:
+      biFn = pairFn;
+      test.apply(biFn, curried, uncurried);
+      biFn = pairFn::apply;
+      test.apply(biFn, curried, uncurried);
+
+      // Lambda to PairFn:
+      pairFn = biFn::apply;
+      test.apply(pairFn, curried, uncurried);
+      pairFn = PairFn.of(biFn);
+      test.apply(pairFn, curried, uncurried);
+
+      // Curried to Uncurried:
+      uncurried = PairFn.uncurry(curried);
+      test.apply(pairFn, curried, uncurried);
+
+      // Uncurried to Curried:
+      curried = PairFn.curry(uncurried);
+      test.apply(pairFn, curried, uncurried);
+
+      // PairFn to Curried:
+      curried = pairFn.curry();
+      test.apply(pairFn, curried, uncurried);
+
+      // PairFn to Uncurried:
+      uncurried = pairFn.uncurry();
+      test.apply(pairFn, curried, uncurried);
+      
+      // Some more fun:
+      pairFn = PairFn.ofUncurried(PairFn.uncurry(pairFn.curry()));
+      pairFn = PairFn.ofCurried(PairFn.curry(pairFn.uncurry()));
+      test.apply(pairFn, curried, uncurried);
     }
 
     {

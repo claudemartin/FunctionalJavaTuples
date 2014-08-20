@@ -28,10 +28,10 @@ import org.javatuples.valueintf.IValue3;
  */
 public interface Fn<T extends Tuple, A, R> {
   /** Converts this to a curried function. */
-  Function<A, ?> curry();
+  UnitFn<A, ?> curry();
 
   /** Converts this to a function on tuples. */
-  Function<T, R> uncurry();
+  UnitFn<T, R> uncurry();
 
   /**
    * Applies a tuple to get the result. <br>
@@ -43,13 +43,14 @@ public interface Fn<T extends Tuple, A, R> {
    *           fails.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  default R applyTuple(final T t) {
+  default R applyTuple(final T tuple) {
+    requireNonNull(tuple, "tuple");
     try {
-      if (this.arity() != t.getSize())
+      if (this.arity() != tuple.getSize())
         throw new IllegalArgumentException(
             "Arity of this function does not match the size of the given tuple.");
       Object curry = this.curry();
-      for (final Object o : t.toList())
+      for (final Object o : tuple.toList())
         curry = ((Function) curry).apply(o);
       return (R) curry;
     } catch (final ClassCastException e) {

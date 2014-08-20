@@ -13,7 +13,7 @@ import org.javatuples.Unit;
 
 /** @see Unit */
 @FunctionalInterface
-public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
+public interface UnitFn<A, R> extends Fn<Unit<A>, A, R>, Function<A, R> {
   /** Converts an uncurried function to a curried function. */
   static <A, R> Function<A, R> curry(final Function<Unit<A>, R> f) {
     return a -> f.apply(Unit.with(a));
@@ -29,9 +29,17 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
     return (a) -> f.apply(Unit.with(a));
   }
 
-  /** Converts an curried function to a UnitFn. */
+  /** Converts a {@link Function} to a UnitFn. */
+  static <A, R> UnitFn<A, R> of(final Function<A, R> f) {
+    return f::apply;
+  }
+
+  /**
+   * Converts an curried function to a UnitFn. In this case this is the same as
+   * {@link #of(Function)}.
+   */
   static <A, R> UnitFn<A, R> ofCurried(final Function<A, R> f) {
-    return (a) -> f.apply(a);
+    return f::apply;
   }
 
   /** Converts a {@link Supplier} to a {@link UnitFn}, which ignores the input. */
@@ -61,14 +69,19 @@ public interface UnitFn<A, R> extends Fn<Unit<A>, A, R> {
    */
   abstract R apply(final A a);
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * A UnitFn already is a Function, so <i>this</i> is returned.
+   */
   @Override
-  default Function<A, R> curry() {
-    return this::apply;
+  default UnitFn<A, R> curry() {
+    return this;
   }
 
   @Override
-  default Function<Unit<A>, R> uncurry() {
-    return (final Unit<A> p) -> this.apply(p.getValue0());
+  default UnitFn<Unit<A>, R> uncurry() {
+    return p -> this.apply(p.getValue0());
   }
 
   @Override

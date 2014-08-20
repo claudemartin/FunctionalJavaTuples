@@ -18,7 +18,7 @@ import org.javatuples.Pair;
 
 /** @see Pair */
 @FunctionalInterface
-public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
+public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R>, BiFunction<A, B, R> {
 
   /**
    * Applies this function to the given arguments.
@@ -32,12 +32,12 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   abstract R apply(final A a, final B b);
 
   /** Converts an uncurried function to a curried function. */
-  static <A, B, R> Function<A, Function<B, R>> curry(final Function<Pair<A, B>, R> f) {
+  static <A, B, R> UnitFn<A, UnitFn<B, R>> curry(final Function<Pair<A, B>, R> f) {
     return a -> b -> f.apply(Pair.with(a, b));
   }
 
   /** Converts a curried function to a function on pairs. */
-  static <A, B, R> Function<Pair<A, B>, R> uncurry(final Function<A, Function<B, R>> f) {
+  static <A, B, R> UnitFn<Pair<A, B>, R> uncurry(final Function<A, ? extends Function<B, R>> f) {
     return (final Pair<A, B> p) -> f.apply(p.getValue0()).apply(p.getValue1());
   }
 
@@ -47,7 +47,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   }
 
   /** Converts an curried function to a PairFn. */
-  static <A, B, R> PairFn<A, B, R> ofCurried(final Function<A, Function<B, R>> f) {
+  static <A, B, R> PairFn<A, B, R> ofCurried(final Function<A, ? extends Function<B, R>> f) {
     return (a, b) -> f.apply(a).apply(b);
   }
 
@@ -69,6 +69,11 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
     return Pair::with;
   }
 
+  /** Function to swap the elements of a Pair. */
+  static <A, B> UnitFn<Pair<A, B>, Pair<B, A>> swap() {
+    return p -> Pair.with(p.getValue1(), p.getValue0());
+  }
+
   /**
    * Takes two lists and returns a list of corresponding pairs. If one input list is short, excess
    * elements of the longer list are discarded.
@@ -78,7 +83,7 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
     requireNonNull(b, "b");
     return zip(//
         () -> new ArrayList<>(Math.min(a.size(), b.size())), // creates new List
-        (x, y) -> Pair.with(x, y), // Creates Pair of two elements
+        PairFn.with(), // Creates Pair of two elements
         a, b); // both lists.
   }
 
@@ -117,12 +122,12 @@ public interface PairFn<A, B, R> extends Fn<Pair<A, B>, A, R> {
   }
 
   @Override
-  default Function<A, Function<B, R>> curry() {
+  default UnitFn<A, UnitFn<B, R>> curry() {
     return a -> b -> this.apply(a, b);
   }
 
   @Override
-  default Function<Pair<A, B>, R> uncurry() {
+  default UnitFn<Pair<A, B>, R> uncurry() {
     return (final Pair<A, B> p) -> this.apply(p.getValue0(), p.getValue1());
   }
 

@@ -35,7 +35,7 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
 
   /** Converts a curried function to a function on triplets. */
   static <A, B, C, R> Function<Triplet<A, B, C>, R> uncurry(
-      final Function<A, Function<B, Function<C, R>>> f) {
+      final Function<A, ? extends Function<B, ? extends Function<C, R>>> f) {
     return t -> f.apply(t.getValue0()).apply(t.getValue1()).apply(t.getValue2());
   }
 
@@ -46,7 +46,7 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
 
   /** Converts an curried function to a BiFunction. */
   static <A, B, C, R> TripletFn<A, B, C, R> ofCurried(
-      final Function<A, Function<B, Function<C, R>>> f) {
+      final Function<A, ? extends Function<B, ? extends Function<C, R>>> f) {
     return (a, b, c) -> f.apply(a).apply(b).apply(c);
   }
 
@@ -67,7 +67,7 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
     final int size = Math.min(a.size(), Math.min(b.size(), c.size()));
     return zip(//
         () -> new ArrayList<>(size), // creates new List
-        (x, y, z) -> Triplet.with(x, y, z), // Creates Triplet of 3 elements
+        TripletFn.with(), // Creates Triplet of 3 elements
         a, b, c); // both lists.
   }
 
@@ -111,12 +111,12 @@ public interface TripletFn<A, B, C, R> extends Fn<Triplet<A, B, C>, A, R> {
   }
 
   @Override
-  default Function<A, Function<B, Function<C, R>>> curry() {
+  default UnitFn<A, UnitFn<B, UnitFn<C, R>>> curry() {
     return a -> b -> c -> this.apply(a, b, c);
   }
 
   @Override
-  default Function<Triplet<A, B, C>, R> uncurry() {
+  default UnitFn<Triplet<A, B, C>, R> uncurry() {
     return (final Triplet<A, B, C> t) -> this.apply(t.getValue0(), t.getValue1(), t.getValue2());
   }
 
